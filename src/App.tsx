@@ -2,47 +2,59 @@ import { useEffect, useState } from 'react';
 import axios from 'axios';
 import './App.css';
 
+interface IOllamaResponsePart {
+  model: string;
+  created_at: string;
+  response: string;
+  done: boolean;
+}
+
 function App() {
-  const [response, setResponse] = useState<string | null>(null);
+  const [prompt, setPrompt] = useState<string>('');
+  const [finalResponse, setFinalResponse] = useState<string>('');
 
-  useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const result = await axios.post('http://localhost:11434/api/generate', {
-          model: 'llama2',
-          prompt: 'Hi',
-        });
+  const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>): void => {
+    setPrompt(event.target.value);
+  };
 
-        // Assuming the response is a string of JSON objects
-        const responseChunks = result.data.split('} {');
-        let fullResponse = '';
+  const callOllamaAPI = async (): Promise<void> => {
+    try {
+      const result = await axios.post('http://localhost:11434/api/generate', {
+        model: 'llama3', // Adjust the model as needed
+        prompt: prompt,
+      }, {
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
 
-        responseChunks.forEach((chunk: string) => {
-          // Add missing brackets if they were removed by split
-          if (!chunk.startsWith('{')) chunk = '{' + chunk;
-          if (!chunk.endsWith('}')) chunk = chunk + '}';
-          console.log(chunk);
-          const json = JSON.parse(chunk);
-          fullResponse += json.response;
-        });
+      // Assuming the API returns a single string with multiple JSON objects
+      const responseString: string = result.data;
+      // Split the string by '}' and filter out any empty strings
+      const responseParts: string[] = responseString.split('}').filter(part => part.trim() !== '');
+      // Parse each part into an object and concatenate the 'response' fields
+      const completeResponse: string = responseParts.map(part => JSON.parse(part + '}')).map((obj: IOllamaResponsePart) => obj.response).join('');
 
-        setResponse(fullResponse);
-      } catch (error) {
-        console.error('Error fetching data:', error);
-      }
-    };
-
-    fetchData();
-  }, []);
+      setFinalResponse(completeResponse);
+    } catch (error) {
+      console.error('Error calling Ollama API:', error);
+    }
+  };
 
   return (
-    <div>
-      <h1>Llama API Response</h1>
-      {response ? (
-        <p>{response}</p>
-      ) : (
-        <p>Loading...</p>
-      )}
+    <div className="ollama-container">
+      <h1>Ollama API Interaction</h1>
+      <input
+        type="text"
+        value={prompt}
+        onChange={handleInputChange}
+        className="ollama-input"
+        placeholder="Enter your prompt here..."
+      />
+      <button onClick={callOllamaAPI} className="ollama-button">Send Prompt</button>
+      <div className="ollama-response">
+        <p>{finalResponse}</p>
+      </div>
     </div>
   );
 }
