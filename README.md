@@ -7,7 +7,7 @@
 
 A modern, responsive React TypeScript web interface for interacting with [Ollama](https://ollama.com) AI models. Features a beautiful chat interface, model selection, and real-time conversation capabilities.
 
-![Ollama UI Preview](https://via.placeholder.com/800x500/667eea/ffffff?text=Ollama+UI+Preview)
+![Ollama UI Preview](public/sample.png)
 
 ## ✨ Features
 
