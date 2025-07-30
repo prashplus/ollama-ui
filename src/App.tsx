@@ -1,6 +1,93 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import './App.css';
+import {
+  ThemeProvider,
+  createTheme,
+  CssBaseline,
+  Container,
+  AppBar,
+  Toolbar,
+  Typography,
+  Box,
+  Paper,
+  TextField,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Button,
+  IconButton,
+  Chip,
+  Alert,
+  Stack,
+  Grid,
+  Card,
+  CardContent,
+  useTheme,
+  useMediaQuery,
+  Drawer,
+} from '@mui/material';
+import {
+  Send as SendIcon,
+  Refresh as RefreshIcon,
+  Clear as ClearIcon,
+  SmartToy as BotIcon,
+  Person as PersonIcon,
+  Menu as MenuIcon,
+  Settings as SettingsIcon,
+  Computer as ComputerIcon,
+  Link as LinkIcon,
+} from '@mui/icons-material';
+
+// Create a custom theme with responsive design
+const theme = createTheme({
+  palette: {
+    mode: 'light',
+    primary: {
+      main: '#667eea',
+      light: '#9ca5f0',
+      dark: '#4054d6',
+    },
+    secondary: {
+      main: '#764ba2',
+      light: '#a575d1',
+      dark: '#4a2673',
+    },
+    background: {
+      default: '#f5f5f5',
+      paper: '#ffffff',
+    },
+  },
+  typography: {
+    fontFamily: '"Roboto", "Helvetica", "Arial", sans-serif',
+    h4: {
+      fontWeight: 700,
+    },
+    h6: {
+      fontWeight: 600,
+    },
+  },
+  shape: {
+    borderRadius: 12,
+  },
+  components: {
+    MuiPaper: {
+      styleOverrides: {
+        root: {
+          boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+        },
+      },
+    },
+    MuiButton: {
+      styleOverrides: {
+        root: {
+          textTransform: 'none',
+          borderRadius: 8,
+        },
+      },
+    },
+  },
+});
 
 interface IOllamaResponsePart {
   model: string;
@@ -32,6 +119,11 @@ function App() {
   const [availableModels, setAvailableModels] = useState<OllamaModel[]>([]);
   const [isLoadingModels, setIsLoadingModels] = useState<boolean>(false);
   const [connectionStatus, setConnectionStatus] = useState<'connected' | 'disconnected' | 'checking'>('checking');
+  const [mobileDrawerOpen, setMobileDrawerOpen] = useState<boolean>(false);
+
+  const muiTheme = useTheme();
+  const isMobile = useMediaQuery(muiTheme.breakpoints.down('md'));
+  const isTablet = useMediaQuery(muiTheme.breakpoints.between('sm', 'lg'));
 
   // Fetch available models from Ollama
   const fetchModels = async (showLoading: boolean = true): Promise<void> => {
@@ -85,10 +177,6 @@ function App() {
 
     return () => clearTimeout(timeoutId);
   }, [apiUrl]);
-
-  const handleInputChange = (event: React.ChangeEvent<HTMLTextAreaElement>): void => {
-    setPrompt(event.target.value);
-  };
 
   const handleKeyPress = (event: React.KeyboardEvent<HTMLTextAreaElement>): void => {
     if (event.key === 'Enter' && !event.shiftKey) {
@@ -183,167 +271,337 @@ function App() {
     }
   };
 
-  return (
-    <div className="ollama-container">
-      <header className="ollama-header">
-        <h1>🦙 Ollama Chat UI</h1>
-        <p>Interact with your local Ollama models</p>
-      </header>
+  const getConnectionStatusChip = () => {
+    const statusConfig = {
+      connected: { label: 'Connected', color: 'success' as const, icon: '🟢' },
+      disconnected: { label: 'Disconnected', color: 'error' as const, icon: '🔴' },
+      checking: { label: 'Checking...', color: 'warning' as const, icon: '🟡' },
+    };
+    
+    const config = statusConfig[connectionStatus];
+    return (
+      <Chip
+        label={`${config.icon} ${config.label}`}
+        color={config.color}
+        size="small"
+        sx={{ ml: 1 }}
+      />
+    );
+  };
 
-      <div className="ollama-settings">
-        <div className="setting-group">
-          <label htmlFor="api-url">API URL:</label>
-          <input
-            id="api-url"
-            type="text"
-            value={apiUrl}
-            onChange={(e) => setApiUrl(e.target.value)}
-            className="setting-input"
-            placeholder="http://localhost:11434"
-          />
-        </div>
-        <div className="setting-group">
-          <label htmlFor="model-select">
-            Model: 
-            <span className={`connection-status ${connectionStatus}`}>
-              {connectionStatus === 'connected' && '🟢 Connected'}
-              {connectionStatus === 'disconnected' && '🔴 Disconnected'}
-              {connectionStatus === 'checking' && '🟡 Checking...'}
-            </span>
-          </label>
-          <div className="model-select-container">
-            <select
-              id="model-select"
-              value={selectedModel}
-              onChange={(e) => setSelectedModel(e.target.value)}
-              className="setting-select"
-              disabled={isLoadingModels || availableModels.length === 0}
-            >
-              {availableModels.length === 0 ? (
-                <option value="">No models available</option>
-              ) : (
-                availableModels.map((model) => (
-                  <option key={model.name} value={model.name}>
-                    {model.name}
-                  </option>
-                ))
-              )}
-            </select>
-            <button 
-              onClick={() => fetchModels(true)} 
-              className="refresh-models-button"
+  const SettingsPanel = () => (
+    <Paper sx={{ p: 2, mb: 2 }}>
+      <Stack spacing={3}>
+        <Typography variant="h6" sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <SettingsIcon /> Settings
+        </Typography>
+        
+        <TextField
+          fullWidth
+          label="API URL"
+          value={apiUrl}
+          onChange={(e) => setApiUrl(e.target.value)}
+          placeholder="http://localhost:11434"
+          InputProps={{
+            startAdornment: <LinkIcon sx={{ mr: 1, color: 'action.active' }} />,
+          }}
+          size={isMobile ? 'small' : 'medium'}
+        />
+
+        <Box>
+          <Stack direction="row" spacing={1} alignItems="center" sx={{ mb: 1 }}>
+            <FormControl fullWidth size={isMobile ? 'small' : 'medium'}>
+              <InputLabel>Model</InputLabel>
+              <Select
+                value={selectedModel}
+                label="Model"
+                onChange={(e) => setSelectedModel(e.target.value)}
+                disabled={isLoadingModels || availableModels.length === 0}
+              >
+                {availableModels.length === 0 ? (
+                  <MenuItem value="">No models available</MenuItem>
+                ) : (
+                  availableModels.map((model) => (
+                    <MenuItem key={model.name} value={model.name}>
+                      {model.name}
+                    </MenuItem>
+                  ))
+                )}
+              </Select>
+            </FormControl>
+            
+            <IconButton
+              onClick={() => fetchModels(true)}
               disabled={isLoadingModels}
               title="Refresh model list"
+              color="primary"
             >
-              {isLoadingModels ? '⏳' : '🔄'}
-            </button>
-          </div>
-          {connectionStatus === 'disconnected' && (
-            <div className="connection-error">
-              <p>⚠️ Cannot connect to Ollama. Please ensure:</p>
-              <ul>
-                <li>Ollama is installed and running</li>
-                <li>Run <code>ollama serve</code> in terminal</li>
-                <li>API URL is correct: {apiUrl}</li>
-              </ul>
-            </div>
-          )}
-        </div>
-        <button onClick={clearChat} className="clear-button" disabled={messages.length === 0}>
-          Clear Chat
-        </button>
-      </div>
+              <RefreshIcon />
+            </IconButton>
+          </Stack>
+          
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            {getConnectionStatusChip()}
+            <Button
+              onClick={clearChat}
+              disabled={messages.length === 0}
+              startIcon={<ClearIcon />}
+              color="error"
+              variant="outlined"
+              size={isMobile ? 'small' : 'medium'}
+            >
+              Clear Chat
+            </Button>
+          </Box>
+        </Box>
 
-      <div className="ollama-chat">
-        <div className="messages-container">
-          {messages.length === 0 ? (
-            <div className="welcome-message">
-              <h3>Welcome to Ollama Chat!</h3>
-              {connectionStatus === 'connected' && availableModels.length > 0 ? (
-                <>
-                  <p>Start a conversation with your AI assistant. Type your message below and press Enter or click Send.</p>
-                  <div className="example-prompts">
-                    <p><strong>Try asking:</strong></p>
-                    <ul>
-                      <li>"Explain quantum computing in simple terms"</li>
-                      <li>"Write a Python function to reverse a string"</li>
-                      <li>"What are the benefits of renewable energy?"</li>
-                    </ul>
-                  </div>
-                </>
-              ) : connectionStatus === 'disconnected' ? (
-                <>
-                  <p>⚠️ Cannot connect to Ollama. Please set up Ollama first:</p>
-                  <div className="example-prompts">
-                    <p><strong>Setup Steps:</strong></p>
-                    <ul>
-                      <li>1. Install Ollama from <a href="https://ollama.com" target="_blank" rel="noopener noreferrer">ollama.com</a></li>
-                      <li>2. Open terminal and run: <code>ollama serve</code></li>
-                      <li>3. Install a model: <code>ollama pull llama3</code></li>
-                      <li>4. Click the refresh button (🔄) above to reload models</li>
-                    </ul>
-                  </div>
-                </>
-              ) : (
-                <p>🔄 Checking connection to Ollama...</p>
-              )}
-            </div>
-          ) : (
-            messages.map((message) => (
-              <div
-                key={message.id}
-                className={`message ${message.isUser ? 'user-message' : 'ai-message'}`}
+        {connectionStatus === 'disconnected' && (
+          <Alert severity="error" sx={{ mt: 2 }}>
+            <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
+              ⚠️ Cannot connect to Ollama. Please ensure:
+            </Typography>
+            <ul style={{ margin: 0, paddingLeft: '20px' }}>
+              <li>Ollama is installed and running</li>
+              <li>Run <code>ollama serve</code> in terminal</li>
+              <li>API URL is correct: {apiUrl}</li>
+            </ul>
+          </Alert>
+        )}
+      </Stack>
+    </Paper>
+  );
+
+  return (
+    <ThemeProvider theme={theme}>
+      <CssBaseline />
+      <Box sx={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+        {/* App Bar */}
+        <AppBar position="static" sx={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' }}>
+          <Toolbar>
+            {isMobile && (
+              <IconButton
+                color="inherit"
+                aria-label="open drawer"
+                edge="start"
+                onClick={() => setMobileDrawerOpen(true)}
+                sx={{ mr: 2 }}
               >
-                <div className="message-content">
-                  <div className="message-text">{message.text}</div>
-                  <div className="message-timestamp">
-                    {message.timestamp.toLocaleTimeString()}
-                  </div>
-                </div>
-              </div>
-            ))
-          )}
-          {isLoading && (
-            <div className="message ai-message">
-              <div className="message-content">
-                <div className="loading-indicator">
-                  <span></span>
-                  <span></span>
-                  <span></span>
-                </div>
-                <div className="message-text">AI is thinking...</div>
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
+                <MenuIcon />
+              </IconButton>
+            )}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexGrow: 1 }}>
+              <Typography variant={isMobile ? 'h6' : 'h4'} component="h1" sx={{ fontWeight: 700 }}>
+                🦙 Ollama Chat UI
+              </Typography>
+            </Box>
+            {!isMobile && getConnectionStatusChip()}
+          </Toolbar>
+        </AppBar>
 
-      <div className="ollama-input-area">
-        <textarea
-          value={prompt}
-          onChange={handleInputChange}
-          onKeyPress={handleKeyPress}
-          className="ollama-textarea"
-          placeholder="Type your message here... (Press Enter to send, Shift+Enter for new line)"
-          rows={3}
-          disabled={isLoading}
-        />
-        <button 
-          onClick={callOllamaAPI} 
-          className="ollama-send-button"
-          disabled={isLoading || !prompt.trim() || !selectedModel || connectionStatus === 'disconnected'}
+        {/* Mobile Drawer */}
+        <Drawer
+          variant="temporary"
+          anchor="left"
+          open={mobileDrawerOpen}
+          onClose={() => setMobileDrawerOpen(false)}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            display: { xs: 'block', md: 'none' },
+            '& .MuiDrawer-paper': { boxSizing: 'border-box', width: 300 },
+          }}
         >
-          {isLoading ? '⏳' : '📤'} {isLoading ? 'Sending...' : 'Send'}
-        </button>
-      </div>
+          <Box sx={{ p: 2 }}>
+            <SettingsPanel />
+          </Box>
+        </Drawer>
 
-      <footer className="ollama-footer">
-        <p>
-          Built with ❤️ using React & TypeScript | 
-          <a href="https://ollama.com" target="_blank" rel="noopener noreferrer"> Learn more about Ollama</a>
-        </p>
-      </footer>
-    </div>
+        {/* Main Content */}
+        <Container maxWidth="xl" sx={{ flexGrow: 1, py: 2, display: 'flex', flexDirection: 'column' }}>
+          <Box sx={{ display: 'flex', gap: 2, flexGrow: 1, flexDirection: isMobile ? 'column' : 'row' }}>
+            {/* Settings Panel for Desktop/Tablet */}
+            {!isMobile && (
+              <Box sx={{ width: { lg: '300px', md: '280px' }, flexShrink: 0 }}>
+                <SettingsPanel />
+              </Box>
+            )}
+            
+            {/* Chat Area */}
+            <Box sx={{ flexGrow: 1 }}>
+              <Paper sx={{ display: 'flex', flexDirection: 'column', height: isMobile ? 'calc(100vh - 200px)' : '70vh' }}>
+                {/* Messages Container */}
+                <Box sx={{ flexGrow: 1, overflow: 'auto', p: 2 }}>
+                  {messages.length === 0 ? (
+                    <Box sx={{ textAlign: 'center', py: 4 }}>
+                      <Typography variant="h5" gutterBottom color="primary" sx={{ fontWeight: 600 }}>
+                        Welcome to Ollama Chat! 🦙
+                      </Typography>
+                      
+                      {connectionStatus === 'connected' && availableModels.length > 0 ? (
+                        <Card sx={{ mt: 3, maxWidth: 600, mx: 'auto' }}>
+                          <CardContent>
+                            <Typography variant="body1" paragraph>
+                              Start a conversation with your AI assistant. Type your message below and press Enter or click Send.
+                            </Typography>
+                            <Box sx={{ textAlign: 'left' }}>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                                Try asking:
+                              </Typography>
+                              <Stack spacing={1}>
+                                <Typography variant="body2">• "Explain quantum computing in simple terms"</Typography>
+                                <Typography variant="body2">• "Write a Python function to reverse a string"</Typography>
+                                <Typography variant="body2">• "What are the benefits of renewable energy?"</Typography>
+                              </Stack>
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      ) : connectionStatus === 'disconnected' ? (
+                        <Card sx={{ mt: 3, maxWidth: 600, mx: 'auto' }}>
+                          <CardContent>
+                            <Alert severity="warning" sx={{ mb: 2 }}>
+                              ⚠️ Cannot connect to Ollama. Please set up Ollama first:
+                            </Alert>
+                            <Box sx={{ textAlign: 'left' }}>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 600, mb: 1 }}>
+                                Setup Steps:
+                              </Typography>
+                              <Stack spacing={1}>
+                                <Typography variant="body2">
+                                  1. Install Ollama from{' '}
+                                  <a href="https://ollama.com" target="_blank" rel="noopener noreferrer">
+                                    ollama.com
+                                  </a>
+                                </Typography>
+                                <Typography variant="body2">2. Open terminal and run: <code>ollama serve</code></Typography>
+                                <Typography variant="body2">3. Install a model: <code>ollama pull llama3</code></Typography>
+                                <Typography variant="body2">4. Click the refresh button (🔄) to reload models</Typography>
+                              </Stack>
+                            </Box>
+                          </CardContent>
+                        </Card>
+                      ) : (
+                        <Typography variant="body1" color="text.secondary">
+                          🔄 Checking connection to Ollama...
+                        </Typography>
+                      )}
+                    </Box>
+                  ) : (
+                    <Stack spacing={2}>
+                      {messages.map((message) => (
+                        <Box
+                          key={message.id}
+                          sx={{
+                            display: 'flex',
+                            justifyContent: message.isUser ? 'flex-end' : 'flex-start',
+                          }}
+                        >
+                          <Paper
+                            elevation={2}
+                            sx={{
+                              p: 2,
+                              maxWidth: '70%',
+                              minWidth: isMobile ? '60%' : '200px',
+                              backgroundColor: message.isUser 
+                                ? 'primary.main' 
+                                : 'background.paper',
+                              color: message.isUser ? 'primary.contrastText' : 'text.primary',
+                            }}
+                          >
+                            <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1 }}>
+                              {message.isUser ? <PersonIcon /> : <BotIcon />}
+                              <Box sx={{ flexGrow: 1 }}>
+                                <Typography variant="body1" sx={{ whiteSpace: 'pre-wrap' }}>
+                                  {message.text}
+                                </Typography>
+                                <Typography 
+                                  variant="caption" 
+                                  sx={{ 
+                                    display: 'block', 
+                                    mt: 1, 
+                                    opacity: 0.7,
+                                    textAlign: 'right'
+                                  }}
+                                >
+                                  {message.timestamp.toLocaleTimeString()}
+                                </Typography>
+                              </Box>
+                            </Box>
+                          </Paper>
+                        </Box>
+                      ))}
+                      
+                      {isLoading && (
+                        <Box sx={{ display: 'flex', justifyContent: 'flex-start' }}>
+                          <Paper elevation={2} sx={{ p: 2, backgroundColor: 'background.paper' }}>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <BotIcon />
+                              <Typography variant="body1">AI is thinking...</Typography>
+                            </Box>
+                          </Paper>
+                        </Box>
+                      )}
+                    </Stack>
+                  )}
+                </Box>
+
+                {/* Input Area */}
+                <Box sx={{ p: 2, borderTop: 1, borderColor: 'divider' }}>
+                  <Stack direction={isMobile ? 'column' : 'row'} spacing={1}>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={isMobile ? 2 : 3}
+                      value={prompt}
+                      onChange={(e) => setPrompt(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          callOllamaAPI();
+                        }
+                      }}
+                      placeholder="Type your message here... (Press Enter to send, Shift+Enter for new line)"
+                      disabled={isLoading}
+                      variant="outlined"
+                    />
+                    <Button
+                      onClick={callOllamaAPI}
+                      disabled={isLoading || !prompt.trim() || !selectedModel || connectionStatus === 'disconnected'}
+                      variant="contained"
+                      endIcon={<SendIcon />}
+                      sx={{ 
+                        minWidth: isMobile ? 'auto' : '120px',
+                        height: isMobile ? '48px' : 'auto'
+                      }}
+                    >
+                      {isLoading ? 'Sending...' : 'Send'}
+                    </Button>
+                  </Stack>
+                </Box>
+              </Paper>
+            </Box>
+          </Box>
+        </Container>
+
+        {/* Footer */}
+        <Box 
+          component="footer" 
+          sx={{ 
+            py: 2, 
+            px: 2, 
+            backgroundColor: 'background.paper', 
+            borderTop: 1, 
+            borderColor: 'divider',
+            textAlign: 'center'
+          }}
+        >
+          <Typography variant="body2" color="text.secondary">
+            Built with ❤️ using React, TypeScript & Material-UI |{' '}
+            <a href="https://ollama.com" target="_blank" rel="noopener noreferrer">
+              Learn more about Ollama
+            </a>
+          </Typography>
+        </Box>
+      </Box>
+    </ThemeProvider>
   );
 }
 
