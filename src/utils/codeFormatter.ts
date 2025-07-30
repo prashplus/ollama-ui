@@ -5,7 +5,6 @@ import { CodeBlock } from '../types';
  */
 export const parseCodeBlocks = (text: string): { text: string; codeBlocks: CodeBlock[] } => {
   const codeBlockRegex = /```(\w+)?\n([\s\S]*?)```/g;
-  const inlineCodeRegex = /`([^`]+)`/g;
   
   const codeBlocks: CodeBlock[] = [];
   let processedText = text;

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import axios from 'axios';
-import { OllamaModel, Message, ConnectionStatus } from '../types';
+import { OllamaModel, ConnectionStatus } from '../types';
 
 export const useOllamaAPI = () => {
   const [apiUrl, setApiUrl] = useState<string>('http://localhost:11434');
@@ -60,7 +60,7 @@ export const useOllamaAPI = () => {
     }, 500); // Debounce API URL changes
 
     return () => clearTimeout(timeoutId);
-  }, [apiUrl]);
+  }, [apiUrl, checkConnection]);
 
   // Generate message
   const generateMessage = async (prompt: string): Promise<string> => {
