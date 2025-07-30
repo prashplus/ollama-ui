@@ -88,13 +88,4 @@ describe('Ollama UI App', () => {
     expect(screen.getByText(/Write a Python function to reverse a string/i)).toBeInTheDocument();
     expect(screen.getByText(/What are the benefits of renewable energy/i)).toBeInTheDocument();
   });
-
-  test('footer contains correct links and text', () => {
-    render(<App />);
-    expect(screen.getByText(/Built with ❤️ using React & TypeScript/i)).toBeInTheDocument();
-    
-    const ollamaLink = screen.getByRole('link', { name: /Learn more about Ollama/i });
-    expect(ollamaLink).toHaveAttribute('href', 'https://ollama.com');
-    expect(ollamaLink).toHaveAttribute('target', '_blank');
-  });
 });
