@@ -1,7 +1,29 @@
 {
   "name": "ollama-ui",
-  "version": "0.1.0",
+  "version": "1.0.0",
+  "description": "A modern React TypeScript UI for interacting with Ollama AI models",
   "private": true,
+  "homepage": "https://prashplus.github.io/ollama-ui",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/prashplus/ollama-ui.git"
+  },
+  "keywords": [
+    "ollama",
+    "ai",
+    "llm",
+    "react",
+    "typescript",
+    "ui",
+    "chat",
+    "llama"
+  ],
+  "author": {
+    "name": "Prashant Piprotar",
+    "email": "prash@example.com",
+    "url": "https://github.com/prashplus"
+  },
+  "license": "MIT",
   "dependencies": {
     "@testing-library/jest-dom": "^5.17.0",
     "@testing-library/react": "^13.4.0",
@@ -21,7 +43,15 @@
     "start": "react-scripts start",
     "build": "react-scripts build",
     "test": "react-scripts test",
-    "eject": "react-scripts eject"
+    "test:ci": "react-scripts test --coverage --ci --watchAll=false",
+    "eject": "react-scripts eject",
+    "lint": "eslint src/**/*.{js,jsx,ts,tsx}",
+    "lint:fix": "eslint src/**/*.{js,jsx,ts,tsx} --fix",
+    "format": "prettier --write src/**/*.{js,jsx,ts,tsx,css,md}",
+    "type-check": "tsc --noEmit",
+    "preview": "npm run build && npx serve -s build",
+    "predeploy": "npm run build",
+    "deploy": "gh-pages -d build"
   },
   "eslintConfig": {
     "extends": [
@@ -40,5 +70,9 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "gh-pages": "^6.1.1",
+    "prettier": "^3.2.5"
   }
 }

@@ -1,6 +1,7 @@
 {
-  "short_name": "React App",
-  "name": "Create React App Sample",
+  "short_name": "Ollama UI",
+  "name": "Ollama UI - Modern Chat Interface for Local AI",
+  "description": "A beautiful, responsive React TypeScript interface for chatting with Ollama AI models locally.",
   "icons": [
     {
       "src": "favicon.ico",
@@ -20,6 +21,10 @@
   ],
   "start_url": ".",
   "display": "standalone",
-  "theme_color": "#000000",
-  "background_color": "#ffffff"
+  "theme_color": "#667eea",
+  "background_color": "#ffffff",
+  "categories": ["productivity", "utilities", "developer"],
+  "screenshots": [],
+  "related_applications": [],
+  "prefer_related_applications": false
 }
