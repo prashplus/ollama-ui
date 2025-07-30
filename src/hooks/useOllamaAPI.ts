@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { OllamaModel, ConnectionStatus } from '../types';
 
@@ -10,7 +10,7 @@ export const useOllamaAPI = () => {
   const [selectedModel, setSelectedModel] = useState<string>('');
 
   // Fetch available models from Ollama
-  const fetchModels = async (showLoading: boolean = true): Promise<void> => {
+  const fetchModels = useCallback(async (showLoading: boolean = true): Promise<void> => {
     if (showLoading) setIsLoadingModels(true);
     try {
       const response = await axios.get(`${apiUrl}/api/tags`, {
@@ -36,10 +36,10 @@ export const useOllamaAPI = () => {
     } finally {
       if (showLoading) setIsLoadingModels(false);
     }
-  };
+  }, [apiUrl, selectedModel]);
 
   // Check Ollama connection status
-  const checkConnection = async (): Promise<void> => {
+  const checkConnection = useCallback(async (): Promise<void> => {
     setConnectionStatus('checking');
     try {
       await axios.get(`${apiUrl}/api/version`, {
@@ -51,7 +51,7 @@ export const useOllamaAPI = () => {
       console.error('Connection check failed:', error);
       setConnectionStatus('disconnected');
     }
-  };
+  }, [apiUrl, fetchModels]);
 
   // Load models when API URL changes
   useEffect(() => {
