@@ -37,7 +37,7 @@ jobs:
     #   run: npm run test:ci
 
     - name: Build application
-      run: npm run build
+      run: yarn build
 
     # - name: Upload coverage to Codecov
     #   if: matrix.node-version == '22.x'
